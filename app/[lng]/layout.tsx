@@ -5,6 +5,7 @@ import { dir } from 'i18next';
 import { languages } from '@i18n/settings';
 import '../globals.css';
 import withAuth from '@hocs/withAuth';
+import { AxiosError } from 'axios';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -12,10 +13,16 @@ export async function generateStaticParams() {
   return languages.map((lng) => ({ lng }));
 }
 
-const RootLayout = ({ children, params: { lng } }: { children: <React></React>.ReactNode; params: { lng: string } }) => {
+const RootLayout = ({ children, params: { lng } }: { children: React.ReactNode; params: { lng: string } }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
+        retry: (failureCount, error) => {
+          if (error instanceof AxiosError && error.response?.status === 401 && failureCount === 0) {
+            return true;
+          }
+          return false;
+        },
         refetchOnWindowFocus: false,
       },
     },
